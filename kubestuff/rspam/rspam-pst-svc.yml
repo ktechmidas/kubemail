@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rspam-pst
+spec:
+  ports:
+  - port: 11332
+  selector:
+    app: rspam

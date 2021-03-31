@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roundcube
+  namespace: default
+  labels:
+    app: roundcube
+spec:
+  selector:
+    matchLabels:
+      app: roundcube
+  template:
+    metadata:
+      labels:
+        app: roundcube
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: Exists
+      nodeSelector:
+        kubernetes.io/os: "linux"
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 15
+      containers:
+      - name: roundcube
+        image: roundcube/roundcubemail #will change later, for now you'll need to build it from the roundcube folder with docker built . -t roundcube
+        env:
+        - name: ROUNDCUBEMAIL_DEFAULT_HOST
+          value: "ssl://mail.ktechmidas.net"
+        - name: ROUNDCUBEMAIL_SMTP_SERVER
+          value: "tls://postfix-sub"
+        - name: ROUNDCUBEMAIL_DEFAULT_PORT
+          value: "993"
+        imagePullPolicy: Always
+        ports: 
+          - name: web
+            containerPort: 80
+            protocol: TCP

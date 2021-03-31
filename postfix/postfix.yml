@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postfix
+  namespace: default
+  labels:
+    k8s-app: postfix
+    component: ingress-controller
+    type: nginx
+spec:
+  selector:
+    matchLabels:
+      k8s-app: mail-loadbalancer
+      component: ingress-controller
+      type: nginx
+  template:
+    metadata:
+      labels:
+        k8s-app: mail-loadbalancer
+        component: ingress-controller
+        type: nginx
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: Exists
+      nodeSelector:
+        kubernetes.io/os: "linux"
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: postfix
+        image: 431145989806.dkr.ecr.ap-southeast-1.amazonaws.com/postfix:latest #will change later, for now you'll need to build it from the postfix folder with docker built . -t postfix
+        imagePullPolicy: Always
+        ports: 
+          - name: postfix
+            containerPort: 25
+            hostPort: 25
+            protocol: TCP
+      imagePullSecrets:
+      - name: regcred

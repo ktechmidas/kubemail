@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: mailu-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx" 
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+  labels:
+    app: postfix
+spec:
+  tls:
+  - hosts:
+    - "mail.ktechmidas.net"
+    secretName: mailu-certificates # If unsure how to generate these, check out https://github.com/ployst/docker-letsencrypt
+  rules:
+  - host: "mail.ktechmidas.net"
+    http:
+      paths:
+      - path: /rspam(/|$)(.*)
+        backend:
+          serviceName: postfix-nginx-svc
+          servicePort: 80
+      - path: /webmail(/|$)(.*)
+        backend:
+          serviceName: roundcube-web
+          servicePort: 80

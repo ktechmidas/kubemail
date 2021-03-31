@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rspam
+  namespace: default
+  labels:
+    app: rspam
+spec:
+  selector:
+    matchLabels:
+      app: rspam
+  template:
+    metadata:
+      labels:
+        app: rspam
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: Exists
+      nodeSelector:
+        kubernetes.io/os: "linux"
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      containers:
+      - name: rspam
+        image: registry.ktechmidas.net/rspam:latest
+        imagePullPolicy: Always
+        ports: 
+          - name: rspam-pst
+            containerPort: 11332
+            protocol: TCP

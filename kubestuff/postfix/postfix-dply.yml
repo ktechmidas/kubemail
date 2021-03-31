@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postfix
+  namespace: default
+  labels:
+    k8s-app: postfix
+    component: ingress-controller
+    type: nginx
+spec:
+  selector:
+    matchLabels:
+      app: postfix
+      k8s-app: postfix
+  template:
+    metadata:
+      labels:
+        app: postfix
+        k8s-app: postfix
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: Exists
+      nodeSelector:
+        kubernetes.io/os: "linux"
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      containers:
+      - name: postfix
+        image: 431145989806.dkr.ecr.ap-southeast-1.amazonaws.com/postfix:latest
+        env:
+        - name: NAME
+          value: "daniel"
+        - name: DOMAIN
+          value: "ktechmidas.net"
+        - name: PASS
+          value: "firstpass"
+        imagePullPolicy: Always
+        ports: 
+          - name: postfix
+            containerPort: 25
+            hostPort: 25
+            protocol: TCP
+          - name: postfix-nginx
+            containerPort: 80
+            protocol: TCP
+          - name: postfix-sub
+            containerPort: 587
+            hostPort: 587
+            protocol: TCP
+          - name: postfix-smtps
+            containerPort: 465
+            hostPort: 465
+            protocol: TCP
+        volumeMounts:
+          - mountPath: /var/spool/virtualmailboxes/
+            name: maildata
+          - mountPath: /data/
+            name: userdata
+          - mountPath: /certs/
+            name: keydata
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+        - name: maildata
+          persistentVolumeClaim:
+            claimName: maildata
+        - name: userdata
+          persistentVolumeClaim:
+            claimName: userdata
+        - name: keydata
+          secret:
+            secretName: mailu-certificates
